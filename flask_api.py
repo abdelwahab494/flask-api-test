@@ -1,18 +1,30 @@
 from flask import Flask, request, jsonify
 import pickle
-from model_utils import is_even_model
+import numpy as np
 
 app = Flask(__name__)
 
-with open("model.pkl", "rb") as f:
+with open("diabetes_model.pkl", "rb") as f:
     model = pickle.load(f)
+
+# values = [1.0, 46.87499999999999, 1.0, 1.0, 0.0, 5.0, 26.0, 1.0, 13.0, 1.0, 1.0, 1.0]
+# input_data = np.array(values).reshape(1, -1)
+# prediction = model.predict(input_data)
+# print(prediction)
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
-    number = int(data.get("number", 0))
-    prediction = model(number)
-    return jsonify({"prediction": prediction})
+    values = data.get("values", [])
+
+    try:
+        input_data = np.array(values).reshape(1, -1)
+        prediction = model.predict(input_data)
+        print(prediction)
+        return jsonify({"prediction": prediction.tolist()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(port = 5000)
+    app.run(port=5000)
